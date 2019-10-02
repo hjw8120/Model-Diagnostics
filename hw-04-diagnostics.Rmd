@@ -1,0 +1,54 @@
+---
+title: "HW 04: Model diagnostics"
+author: "INSERT NAME"
+date: "INSERT DATE"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning=FALSE,
+                      message=FALSE)
+```
+
+```{r load-packages}
+library(tidyverse)
+library(broom)
+library(knitr) 
+library(rms)
+```
+
+```{r load-data}
+airbnb_mod <- read_csv("data/airbnb_mod.csv")
+```
+
+### Question 1
+
+
+### Question 2
+
+
+### Question 3
+
+
+### Question 4
+
+
+### Question 5
+
+
+### Question 6
+
+
+### Question 7
+
+
+### Question 8
+
+
+### Overall (do not delete!)
+
+
+
+
+
