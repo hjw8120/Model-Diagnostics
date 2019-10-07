@@ -43,7 +43,7 @@ For every 1 point increase in average review score, we expect the median total c
 ### Question 3
 
 ```{r model-roomtype}
-logprice_model <- lm(log_price_3 ~ prop_type_simp + number_of_reviews + review_scores_rating + room_type, data = airbnb_mod)
+logprice_model_full <- lm(log_price_3 ~ prop_type_simp + number_of_reviews + review_scores_rating + room_type, data = airbnb_mod)
 kable(tidy(logprice_model, conf.int = TRUE, level = 0.95),digits=5)
 ```
 
@@ -54,6 +54,7 @@ logprice-hat = 5.513 - 0.145 * prop_type_simpGuestsuite + 0.279 * prop_type_simp
 ```{r plot-roomtype}
 ggplot(data = airbnb_mod, mapping = aes(x = room_type, y = log_price_3)) + geom_boxplot() + labs(title = "Distribution of Logprice for 3 Nights by Room Type", x = "Room Type", y = "Logprice")
 ```
+
 ANOVA F Test
 
 H0: βentirehome=βprivate=βshared=0
@@ -72,12 +73,65 @@ At least one coeffecient associated with `room_type` is not 0. Therefore, `room_
 
 ### Question 5
 
+```{r augment}
+price_output <- augment(logprice_model_full) %>%
+  mutate(obs_num = row_number())
+
+price_output %>%
+  slice(1:5)
+```
 
 ### Question 6
 
+We will use hi > 2(p+1) / n for the leverage threshold. If an observation's leverage is greater than 2 * (number of predictor variables + 1) / number of observations, then the observation is a high leverage point.
+
+```{r leverage-plot}
+leverage_threshold <- 2*(4+1)/nrow(airbnb_mod)
+
+ggplot(data = price_output, aes(x = obs_num,y = .hat)) + 
+  geom_point(alpha = 0.7) + 
+  geom_hline(yintercept = leverage_threshold,color = "red")+
+  labs(x = "Observation Number",y = "Leverage",title = "Leverage") +
+  geom_text(aes(label=ifelse(.hat > leverage_threshold, as.character(obs_num), "")), nudge_x = 4)
+```
+
+_____ observations are considered high leverage.
+
+```{r cooksdistance}
+ggplot(data = price_output, aes(x = obs_num, y = .cooksd)) + 
+  geom_point(alpha = 0.7) + 
+  geom_hline(yintercept=1,color = "red")+
+  labs(x= "Observation Number",y = "Cook's Distance",title = "Cook's Distance") +
+  geom_text(aes(label = ifelse(.hat>1,as.character(obs_num),"")))
+```
+
+Based on Cook's Distance, these points do not have a significant influence on model coefficients. Cook's Distance is the change in predicted price when an observation is dropped. None of the observations have a Cook's Distance greater than the threshold of 1, so they do not have significant influences on the model coefficients.
 
 ### Question 7
 
+```{r std-resid}
+ggplot(data = price_output, aes(x = .fitted,y = .std.resid)) +
+  geom_point(alpha = 0.7) + 
+  geom_hline(yintercept = 0,color = "red") +
+  geom_hline(yintercept = -2,color = "red",linetype = "dotted") +
+  geom_hline(yintercept = 2,color = "red",linetype = "dotted") +
+  labs(x ="Predicted Value",y ="Standardized Residuals",title = "Standardized Residuals vs. Predicted") +
+  geom_text(aes(label = ifelse(abs(.std.resid) >2,as.character(obs_num),"")), nudge_x = 0.3)
+```
+
+
+```{r large-stdresid}
+price_output %>% filter(abs(.std.resid) > 2) %>% 
+  select(prop_type_simp, number_of_reviews, review_scores_rating, room_type)
+```
+
+75 observations are considered to have standardized residuals with large magnitude. 
+
+```{r stdresid-hist}
+ggplot(data = price_output, mapping = aes(x = .std.resid)) + geom_histogram() + labs(title = "Distribution of Standard Residuals")
+```
+
+EXPLANATION
 
 ### Question 8
 
