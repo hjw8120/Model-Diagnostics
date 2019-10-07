@@ -1,7 +1,7 @@
 ---
 title: "HW 04: Model diagnostics"
-author: "INSERT NAME"
-date: "INSERT DATE"
+author: "Hannah Wang"
+date: "10 October 2019"
 output: github_document
 ---
 
@@ -24,15 +24,51 @@ airbnb_mod <- read_csv("data/airbnb_mod.csv")
 
 ### Question 1
 
+```{r logprice}
+airbnb_mod <- airbnb_mod %>%
+  mutate(log_price_3 = log(price_3_nights))
+```
+
+```{r model}
+logprice_model <- lm(log_price_3 ~ prop_type_simp + number_of_reviews + review_scores_rating, data = airbnb_mod)
+kable(tidy(logprice_model, conf.int = TRUE, level = 0.95),digits=5)
+```
+
+logprice-hat = 5.244 - 0.206 * prop_type_simpGuestsuite - 0.057 * prop_type_simpHouse - 0.032 * prop_type_simpOther - 0.001 * number_of_reviews + 0.008 * review_scores_rating
 
 ### Question 2
 
+For every 1 point increase in average review score, we expect the median total cost for 3 nights to be multiplied by a factor of exp(0.008) = $1.008.
 
 ### Question 3
 
+```{r model-roomtype}
+logprice_model <- lm(log_price_3 ~ prop_type_simp + number_of_reviews + review_scores_rating + room_type, data = airbnb_mod)
+kable(tidy(logprice_model, conf.int = TRUE, level = 0.95),digits=5)
+```
+
+logprice-hat = 5.513 - 0.145 * prop_type_simpGuestsuite + 0.279 * prop_type_simpHouse + 0.167 * prop_type_simpOther - 0.001 * number_of_reviews + 0.006 * review_scores_rating - 0.745 * room_typePrivateroom - 1.829 * room_typeSharedroom
 
 ### Question 4
 
+```{r plot-roomtype}
+ggplot(data = airbnb_mod, mapping = aes(x = room_type, y = log_price_3)) + geom_boxplot() + labs(title = "Distribution of Logprice for 3 Nights by Room Type", x = "Room Type", y = "Logprice")
+```
+ANOVA F Test
+
+H0: βentirehome=βprivate=βshared=0
+
+Ha: at least one βj is not equal to 0
+
+```{r roomtype-compare}
+reduced <- lm(log_price_3 ~ prop_type_simp + number_of_reviews + review_scores_rating, data = airbnb_mod)
+
+full <- lm(log_price_3 ~ prop_type_simp + number_of_reviews + review_scores_rating + room_type, data = airbnb_mod)
+
+kable(anova(reduced, full), format="markdown", digits = 3)
+```
+
+At least one coeffecient associated with `room_type` is not 0. Therefore, `room_type` is a significant predictor of cost for 3 nights.
 
 ### Question 5
 
