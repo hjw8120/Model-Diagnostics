@@ -26,6 +26,7 @@ airbnb_mod <- read_csv("data/airbnb_mod.csv")
 
 ```{r logprice}
 airbnb_mod <- airbnb_mod %>%
+  filter(!is.na(price_3_nights), !is.na(prop_type_simp), !is.na(room_type), !is.na(number_of_reviews), !is.na(review_scores_rating)) %>%
   mutate(log_price_3 = log(price_3_nights))
 ```
 
@@ -44,12 +45,14 @@ For every 1 point increase in average review score, we expect the median total c
 
 ```{r model-roomtype}
 logprice_model_full <- lm(log_price_3 ~ prop_type_simp + number_of_reviews + review_scores_rating + room_type, data = airbnb_mod)
-kable(tidy(logprice_model, conf.int = TRUE, level = 0.95),digits=5)
+kable(tidy(logprice_model_full, conf.int = TRUE, level = 0.95),digits=5)
 ```
 
 logprice-hat = 5.513 - 0.145 * prop_type_simpGuestsuite + 0.279 * prop_type_simpHouse + 0.167 * prop_type_simpOther - 0.001 * number_of_reviews + 0.006 * review_scores_rating - 0.745 * room_typePrivateroom - 1.829 * room_typeSharedroom
 
 ### Question 4
+
+Created a box plot to visualize the distribution of logprice for 3 nights based on room type:
 
 ```{r plot-roomtype}
 ggplot(data = airbnb_mod, mapping = aes(x = room_type, y = log_price_3)) + geom_boxplot() + labs(title = "Distribution of Logprice for 3 Nights by Room Type", x = "Room Type", y = "Logprice")
@@ -69,7 +72,7 @@ full <- lm(log_price_3 ~ prop_type_simp + number_of_reviews + review_scores_rati
 kable(anova(reduced, full), format="markdown", digits = 3)
 ```
 
-The p-value is 0, which less than alpha level 0.05, so we reject the null hypothesis, so at least one slope coefficient for room type (private or shared) is not equal to 0. At least one coeffecient associated with `room_type` is not 0. Therefore, `room_type` is a significant predictor of cost for 3 nights.
+The p-value is 0, which less than alpha level 0.05, so we reject the null hypothesis, so there is statistically significant evidence that at least one slope coefficient for room type (private or shared) is not equal to 0. At least one coeffecient associated with `room_type` is not 0. Therefore, `room_type` is a significant predictor of cost for 3 nights.
 
 ### Question 5
 
@@ -97,9 +100,10 @@ ggplot(data = price_output, aes(x = obs_num,y = .hat)) +
 
 ```{r leverage-count}
 price_output %>%
-  filter(.hat > leverage_threshold)
+  filter(.hat > leverage_threshold) %>%
+  nrow()
 ```
-71 observations are considered high leverage.
+62 observations are considered high leverage since they have leverages above the leverage threshold.
 
 ```{r cooksdistance}
 ggplot(data = price_output, aes(x = obs_num, y = .cooksd)) + 
@@ -109,7 +113,7 @@ ggplot(data = price_output, aes(x = obs_num, y = .cooksd)) +
   geom_text(aes(label = ifelse(.hat>1,as.character(obs_num),"")))
 ```
 
-Based on Cook's Distance, these points do not have a significant influence on model coefficients. Cook's Distance is the change in predicted price when an observation is dropped. None of the observations have a Cook's Distance greater than the threshold of 1, so they do not have significant influences on the model coefficients.
+Based on Cook's Distance, these high leverage points do not have a significant influence on model coefficients. Cook's Distance is the change in predicted price when an observation is dropped. None of the observations have a Cook's Distance greater than the threshold of 1, so they do not have significant influences on the model coefficients.
 
 ### Question 7
 
@@ -125,17 +129,22 @@ ggplot(data = price_output, aes(x = .fitted,y = .std.resid)) +
 
 
 ```{r large-stdresid}
-price_output %>% filter(abs(.std.resid) > 2) %>% 
-  select(prop_type_simp, number_of_reviews, review_scores_rating, room_type)
+price_output %>% 
+  filter(abs(.std.resid) > 2) %>%
+  nrow()
 ```
 
 75 observations are considered to have standardized residuals with large magnitude. 
 
 ```{r stdresid-hist}
-ggplot(data = price_output, mapping = aes(x = .std.resid)) + geom_histogram() + labs(title = "Distribution of Standard Residuals")
+ggplot(data = price_output, mapping = aes(x = .std.resid)) + geom_histogram() + geom_vline(xintercept = -2,color = "red") + geom_vline(xintercept = 2, color = "red") + labs(title = "Distribution of Standard Residuals")
 ```
 
-EXPLANATION
+```{r prop}
+75/nrow(airbnb_mod)
+```
+
+4.47% of the observations have standard residuals with magnitude > 2. This is not a concern because only 4.5% of the observations are flagged as having standard residuals with large magnitude, which is not a significant proportion of the total 1676 observations.
 
 ### Question 8
 
@@ -143,7 +152,7 @@ EXPLANATION
 tidy(vif(logprice_model_full))
 ```
 
-There are no obvious concerns for multicollinearity because none of the variables have VIF's greater than 10.
+There are no obvious concerns for multicollinearity because none of the predictor variables have variance inflation factors greater than 10.
 
 ### Overall (do not delete!)
 
