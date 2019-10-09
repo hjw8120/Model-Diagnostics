@@ -77,7 +77,7 @@ ggplot(data = airbnb_mod, mapping = aes(x = room_type, y = log_price_3)) + geom_
 
 ANOVA F Test
 
-H0: βentirehome=βprivate=βshared=0
+H0: βprivate=βshared=0
 
 Ha: at least one βj is not equal to
 0
@@ -95,8 +95,11 @@ kable(anova(reduced, full), format="markdown", digits = 3)
 |   1670 | 592.556 | NA |        NA |      NA |      NA |
 |   1668 | 408.084 |  2 |   184.472 | 377.006 |       0 |
 
-At least one coeffecient associated with `room_type` is not 0.
-Therefore, `room_type` is a significant predictor of cost for 3 nights.
+The p-value is 0, which less than alpha level 0.05, so we reject the
+null hypothesis, so at least one slope coefficient for room type
+(private or shared) is not equal to 0. At least one coeffecient
+associated with `room_type` is not 0. Therefore, `room_type` is a
+significant predictor of cost for 3 nights.
 
 ### Question 5
 
@@ -128,7 +131,7 @@ variables + 1) / number of observations, then the observation is a high
 leverage point.
 
 ``` r
-leverage_threshold <- 2*(4+1)/nrow(airbnb_mod)
+leverage_threshold <- 2*(7+1)/nrow(airbnb_mod)
 
 ggplot(data = price_output, aes(x = obs_num,y = .hat)) + 
   geom_point(alpha = 0.7) + 
@@ -139,7 +142,29 @@ ggplot(data = price_output, aes(x = obs_num,y = .hat)) +
 
 ![](hw-04-diagnostics_files/figure-gfm/leverage-plot-1.png)<!-- -->
 
-\_\_\_\_\_ observations are considered high leverage.
+``` r
+price_output %>%
+  filter(.hat > leverage_threshold)
+```
+
+    ## # A tibble: 71 x 14
+    ##    .rownames log_price_3 prop_type_simp number_of_revie… review_scores_r…
+    ##    <chr>           <dbl> <chr>                     <dbl>            <dbl>
+    ##  1 5                4.36 House                       198               93
+    ##  2 8                5.43 Apartment                   415               98
+    ##  3 13               5.57 Guest suite                 433               97
+    ##  4 17               5.72 Other                       306               99
+    ##  5 25               5.09 House                       778               92
+    ##  6 26               6.62 House                       322               94
+    ##  7 28               6.26 Other                         3               80
+    ##  8 33               5.72 Guest suite                 414               97
+    ##  9 34               5.33 House                       388               98
+    ## 10 41               6.14 Other                       394              100
+    ## # … with 61 more rows, and 9 more variables: room_type <chr>,
+    ## #   .fitted <dbl>, .se.fit <dbl>, .resid <dbl>, .hat <dbl>, .sigma <dbl>,
+    ## #   .cooksd <dbl>, .std.resid <dbl>, obs_num <int>
+
+71 observations are considered high leverage.
 
 ``` r
 ggplot(data = price_output, aes(x = obs_num, y = .cooksd)) + 
@@ -203,5 +228,23 @@ ggplot(data = price_output, mapping = aes(x = .std.resid)) + geom_histogram() + 
 EXPLANATION
 
 ### Question 8
+
+``` r
+tidy(vif(logprice_model_full))
+```
+
+    ## # A tibble: 7 x 2
+    ##   names                         x
+    ##   <chr>                     <dbl>
+    ## 1 prop_type_simpGuest suite  1.55
+    ## 2 prop_type_simpHouse        2.15
+    ## 3 prop_type_simpOther        1.79
+    ## 4 number_of_reviews          1.01
+    ## 5 review_scores_rating       1.01
+    ## 6 room_typePrivate room      1.17
+    ## 7 room_typeShared room       1.02
+
+There are no obvious concerns for multicollinearity because none of the
+variables have VIF’s greater than 10.
 
 ### Overall (do not delete\!)
