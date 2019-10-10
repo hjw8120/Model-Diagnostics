@@ -202,7 +202,7 @@ price_output %>%
 magnitude.
 
 ``` r
-ggplot(data = price_output, mapping = aes(x = .std.resid)) + geom_histogram() + geom_vline(xintercept = -2,color = "red") + geom_vline(xintercept = 2, color = "red") + labs(title = "Distribution of Standard Residuals")
+ggplot(data = price_output, mapping = aes(x = .std.resid)) + geom_histogram() + geom_vline(xintercept = -2,color = "red") + geom_vline(xintercept = 2, color = "red") + labs(title = "Distribution of Standard Residuals", x = "Standard Residuals", y = "Count")
 ```
 
 ![](hw-04-diagnostics_files/figure-gfm/stdresid-hist-1.png)<!-- -->

@@ -137,7 +137,7 @@ price_output %>%
 75 observations are considered to have standardized residuals with large magnitude. 
 
 ```{r stdresid-hist}
-ggplot(data = price_output, mapping = aes(x = .std.resid)) + geom_histogram() + geom_vline(xintercept = -2,color = "red") + geom_vline(xintercept = 2, color = "red") + labs(title = "Distribution of Standard Residuals")
+ggplot(data = price_output, mapping = aes(x = .std.resid)) + geom_histogram() + geom_vline(xintercept = -2,color = "red") + geom_vline(xintercept = 2, color = "red") + labs(title = "Distribution of Standard Residuals", x = "Standard Residuals", y = "Count")
 ```
 
 ```{r prop}
